@@ -4,8 +4,20 @@ from django.contrib.auth.models import User
 LANGUAGE_CHOICES = [
     ('python', 'Python'),
     ('javascript', 'JavaScript'),
-    ('cpp', 'C/C++'),
+    ('cpp', 'C++'),
+    ('c', 'C'),
     ('java', 'Java'),
+    ('php', 'PHP'),
+    ('ruby', 'Ruby'),
+    ('perl', 'Perl'),
+    ('csharp', 'C#'),
+    ('ocaml', 'OCaml'),
+    ('vbnet', 'VB.NET'),
+    ('swift', 'Swift'),
+    ('fortran', 'Fortran'),
+    ('haskell', 'Haskell'),
+    ('assembly', 'Assembly'),
+    ('prolog', 'Prolog'),
 ]
 
 class CodeSnippet(models.Model):

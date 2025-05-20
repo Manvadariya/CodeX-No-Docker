@@ -24,9 +24,57 @@ switch(snippetData.language) {
         mode = 'text/x-c++src';
         fileExtension = 'cpp';
         break;
+    case 'c':
+        mode = 'text/x-csrc';
+        fileExtension = 'c';
+        break;
     case 'java':
         mode = 'text/x-java';
         fileExtension = 'java';
+        break;
+    case 'php':
+        mode = 'php';
+        fileExtension = 'php';
+        break;
+    case 'ruby':
+        mode = 'ruby';
+        fileExtension = 'rb';
+        break;
+    case 'perl':
+        mode = 'perl';
+        fileExtension = 'pl';
+        break;
+    case 'csharp':
+        mode = 'text/x-csharp';
+        fileExtension = 'cs';
+        break;
+    case 'ocaml':
+        mode = 'mllike';
+        fileExtension = 'ml';
+        break;
+    case 'vbnet':
+        mode = 'vb';
+        fileExtension = 'vb';
+        break;
+    case 'swift':
+        mode = 'swift';
+        fileExtension = 'swift';
+        break;
+    case 'fortran':
+        mode = 'fortran';
+        fileExtension = 'f90';
+        break;
+    case 'haskell':
+        mode = 'haskell';
+        fileExtension = 'hs';
+        break;
+    case 'assembly':
+        mode = 'gas';
+        fileExtension = 'asm';
+        break;
+    case 'prolog':
+        mode = 'prolog';
+        fileExtension = 'pl';
         break;
     default:
         mode = 'javascript';

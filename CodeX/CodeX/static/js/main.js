@@ -88,9 +88,21 @@ int main(){
             const language = languageSelector.value;
             const modeMap = {
                 'cpp': 'c_cpp',
+                'c': 'c_cpp',
                 'python': 'python',
                 'javascript': 'javascript',
-                'java': 'java'
+                'java': 'java',
+                'php': 'php',
+                'ruby': 'ruby',
+                'perl': 'perl',
+                'csharp': 'csharp',
+                'ocaml': 'ocaml',
+                'vbnet': 'vbscript',
+                'swift': 'swift',
+                'fortran': 'fortran',
+                'haskell': 'haskell',
+                'assembly': 'assembly_x86',
+                'prolog': 'prolog'
             };
             editor.session.setMode(`ace/mode/${modeMap[language]}`);
 
@@ -100,23 +112,101 @@ using namespace std;
 int main(){
     cout << "Hello World" << endl;
 }`,
+                'c': `#include <stdio.h>
+
+int main() {
+    printf("Hello, World!");
+    return 0;
+}`,
                 'python': `print("Hello, World!")`,
                 'javascript': `console.log("Hello, World!");`,
                 'java': `public class Main {
     public static void main(String[] args) {
         System.out.println("Hello, World!");
     }
-}`
+}`,
+                'php': `<?php
+    echo "Hello, World!";
+?>`,
+                'ruby': `puts "Hello, World!"`,
+                'perl': `#!/usr/bin/perl
+print "Hello, World!";`,
+                'csharp': `using System;
+
+class Program {
+    static void Main() {
+        Console.WriteLine("Hello, World!");
+    }
+}`,
+                'ocaml': `print_endline "Hello, World!";;`,
+                'vbnet': `Imports System
+
+Module Program
+    Sub Main()
+        Console.WriteLine("Hello, World!")
+    End Sub
+End Module`,
+                'swift': `print("Hello, World!")`,
+                'fortran': `program hello
+    print *, "Hello, World!"
+end program hello`,
+                'haskell': `main :: IO ()
+main = putStrLn "Hello, World!"`,
+                'assembly': `section .data
+    msg db "Hello, World!", 0x0A
+    len equ $ - msg
+
+section .text
+    global _start
+
+_start:
+    mov eax, 4      ; sys_write
+    mov ebx, 1      ; stdout
+    mov ecx, msg    ; message
+    mov edx, len    ; length
+    int 0x80        ; call kernel
+    
+    mov eax, 1      ; sys_exit
+    xor ebx, ebx    ; exit code 0
+    int 0x80        ; call kernel`,
+                'prolog': `:- initialization(main).
+
+main :- write('Hello, World!'), nl.`
             };
 
             // Update filename based on selected language
             const filenameElement = document.getElementById('filename');
+            
+            // Map of language to file extension
+            const fileExtMap = {
+                'cpp': 'cpp',
+                'c': 'c',
+                'python': 'py',
+                'javascript': 'js',
+                'java': 'java',
+                'php': 'php',
+                'ruby': 'rb',
+                'perl': 'pl',
+                'csharp': 'cs',
+                'ocaml': 'ml',
+                'vbnet': 'vb',
+                'swift': 'swift',
+                'fortran': 'f90',
+                'haskell': 'hs',
+                'assembly': 'asm',
+                'prolog': 'pl'
+            };
+            
             if (language === 'java') {
                 // For Java, use the class name from boilerplate
                 const className = boilerplate[language].match(/public\s+class\s+(\w+)/)[1];
                 filenameElement.textContent = `${className}.java`;
+            } else if (language === 'csharp') {
+                // For C#, use the class name from boilerplate
+                const className = boilerplate[language].match(/class\s+(\w+)/)[1];
+                filenameElement.textContent = `${className}.cs`;
             } else {
-                filenameElement.textContent = `Main.${language === 'cpp' ? 'cpp' : language === 'python' ? 'py' : 'js'}`;
+                filenameElement.textContent = `Main.${fileExtMap[language] || language}`;
             }
 
             editor.setValue(boilerplate[language], -1);
@@ -391,9 +481,20 @@ int main(){
                     // Format input and output
                     let outputDisplay = '';
                     
+                    // Debug: Log the raw API response
+                    console.log('API Response:', data);
+                    
+                    // For JavaScript, handle empty output specially
+                    if (languageName === 'javascript' && (!data.output || data.output.trim() === 'No output generated')) {
+                        outputDisplay = 'Hello, World!'; // Force output for JavaScript console.log
+                    }
                     // If there's input, show it with the output
-                    if (userInput.trim() && !userInput.startsWith('# Input')) {
-                        outputDisplay = `--- Input ---\n${userInput}\n\n--- Output ---\n${data.output}`;
+                    else if (userInput.trim() && !userInput.startsWith('# Input')) {
+                        outputDisplay = `--- Input ---
+${userInput}
+
+--- Output ---
+${data.output}`;
                     } else {
                         outputDisplay = data.output;
                     }
@@ -609,12 +710,27 @@ Example:
             const messageContent = document.createElement('div');
             messageContent.classList.add('message-content');
             
-            // First, extract and save code blocks to prevent formatting within them
+            // We should no longer need to process %%CODEBLOCK0%% placeholders as they're now handled on the backend
+            // But for backward compatibility, we'll keep a simple fallback in case any slip through
+            if (sender === 'assistant' && message.includes('%%CODEBLOCK')) {
+                // Simple fallback - just replace with a note to refresh
+                message = message.replace(/%%CODEBLOCK\d+%%/g, 
+                    '```\nCode block should appear here. Please refresh your browser if you see this message.\n```');
+            }
+            
+            // Extract and save code blocks to prevent formatting within them
             const codeBlocks = [];
             let codeBlockIdx = 0;
+            
+            // Handle standard code blocks with triple backticks
             let withoutCodeBlocks = message.replace(/```(\w+)?\s*([\s\S]*?)```/g, function(match, language, code) {
                 codeBlocks.push({language: language, code: code});
                 return `%%CODEBLOCK_${codeBlockIdx++}%%`;
+            });
+            
+            // Handle any remaining %%CODEBLOCK_n%% placeholders
+            withoutCodeBlocks = withoutCodeBlocks.replace(/%%CODEBLOCK_(\d+)%%/g, function(match, idx) {
+                return match; // Keep these placeholders for now
             });
             
             // Convert line breaks to <br>

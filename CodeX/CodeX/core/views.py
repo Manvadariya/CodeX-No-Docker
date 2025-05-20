@@ -42,11 +42,10 @@ def get_openai_client(api_key=None):
     if api_key:
         # Store the API key for future calls
         current_api_key = api_key
-        print(f"Using custom API key: {api_key[:5]}...{api_key[-5:] if len(api_key) > 10 else ''}")
         
         # Check if it's a GitHub token
         if api_key.startswith('ghp_'):
-            print("Detected GitHub token format")
+            pass
         
         # Create a new client with the provided API key
         return OpenAI(
@@ -79,8 +78,11 @@ def chat_with_gpt(prompt, chat_history, api_key=None):
             "content": ("You are a specialized code assistant. Your job is to help users troubleshoot and fix code errors, "
                         "generate new code based on requirements, and suggest improvements to increase efficiency. "
                         "Provide clear, step-by-step guidance and sample code where applicable. "
-                        "You are also a specialized code assistant for Python, JavaScript, and C++, Java. "
-                        "Your primary goal is to assist users in writing and debugging code in shortest and summarized response possible.")
+                        "You are also a specialized code assistant for Python, JavaScript, C, C++, Java, PHP, Ruby, Perl, C#, OCaml, VB.NET, Swift, "
+                        "Pascal, Fortran, Haskell, Assembly, and Prolog. "
+                        "Your primary goal is to assist users in writing and debugging code in shortest and summarized response possible."
+                        "Also by default not provide output snippet in response and only provide one code snippet in response, which is the important and final code snippet."
+                        "If user ask for output snippet, then only provide output snippet in response.")
         }
     ] + chat_history + [
         {
@@ -258,8 +260,34 @@ def chat_api(request):
                     language = 'javascript'
                 elif detected_lang in ['cpp', 'c++']:
                     language = 'cpp'
+                elif detected_lang in ['c']:
+                    language = 'c'
                 elif detected_lang in ['java']:
                     language = 'java'
+                elif detected_lang in ['php']:
+                    language = 'php'
+                elif detected_lang in ['ruby', 'rb']:
+                    language = 'ruby'
+                elif detected_lang in ['perl', 'pl']:
+                    language = 'perl'
+                elif detected_lang in ['csharp', 'cs', 'c#']:
+                    language = 'csharp'
+                elif detected_lang in ['ocaml', 'ml']:
+                    language = 'ocaml'
+                elif detected_lang in ['vbnet', 'vb', 'vb.net']:
+                    language = 'vbnet'
+                elif detected_lang in ['swift']:
+                    language = 'swift'
+                elif detected_lang in ['pascal', 'pas']:
+                    language = 'pascal'
+                elif detected_lang in ['fortran', 'f90', 'f95']:
+                    language = 'fortran'
+                elif detected_lang in ['haskell', 'hs']:
+                    language = 'haskell'
+                elif detected_lang in ['assembly', 'asm']:
+                    language = 'assembly'
+                elif detected_lang in ['prolog']:
+                    language = 'prolog'
             
             code_snippet = CodeSnippet.objects.create(
                 title=f"AI Chat Snippet - {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}",
@@ -271,16 +299,81 @@ def chat_api(request):
         # Pass the API key from the headers to the chat_with_gpt function
         response = chat_with_gpt(prompt, chat_history, api_key)
         
+        # Completely new approach to process AI responses with code blocks
+        def process_ai_response(text):
+            import re
+            
+            # Check if response has any placeholders like %%CODEBLOCK0%%
+            if '%%CODEBLOCK' not in text:
+                return text  # No transformation needed
+            
+            # 1. Extract all actual code blocks with their languages
+            code_blocks = []
+            code_pattern = re.compile(r'```(.*?)\n([\s\S]*?)```', re.DOTALL)
+            
+            for match in code_pattern.finditer(text):
+                language = match.group(1).strip()
+                code = match.group(2).strip()
+                code_blocks.append({'language': language, 'code': code})
+            
+            # 2. Check if we have placeholder references like %%CODEBLOCK0%%
+            placeholder_pattern = re.compile(r'%%CODEBLOCK(\d+)%%')
+            placeholders = [int(m.group(1)) for m in placeholder_pattern.finditer(text)]
+            
+            # 3. If we have placeholders but no or fewer code blocks, handle this case
+            if placeholders and len(code_blocks) < len(set(placeholders)):
+                # Use a fallback approach - create a clean version without placeholders
+                # Find all text portions (not code blocks or placeholders)
+                text_parts = re.split(r'(```.*?```|%%CODEBLOCK\d+%%)', text, flags=re.DOTALL)
+                
+                # Keep only the text parts and actual code blocks
+                clean_parts = []
+                for part in text_parts:
+                    if part and not part.strip().startswith('%%CODEBLOCK'):
+                        clean_parts.append(part)
+                
+                # If we have at least one code block, include only the first one
+                # This handles the case where we should only show the "most appropriate" code
+                if code_blocks:
+                    best_code = code_blocks[0]
+                    clean_text = ''.join(clean_parts).strip()
+                    
+                    # Ensure we have no remaining code blocks in the clean text
+                    clean_text = re.sub(r'```.*?```', '', clean_text, flags=re.DOTALL).strip()
+                    
+                    return f"{clean_text}\n\n```{best_code['language']}\n{best_code['code']}\n```"
+                
+                # If we have no code blocks, just return the cleaned text
+                return ''.join(clean_parts)
+            
+            # 4. If we have enough code blocks for all placeholders, do a direct replacement
+            result = text
+            
+            for placeholder in set(placeholders):
+                if placeholder < len(code_blocks):
+                    block = code_blocks[placeholder]
+                    replacement = f"```{block['language']}\n{block['code']}\n```"
+                    result = result.replace(f"%%CODEBLOCK{placeholder}%%", replacement)
+                else:
+                    # Replace with an empty code block if placeholder index is out of range
+                    result = result.replace(f"%%CODEBLOCK{placeholder}%%", 
+                                          "```\nNo code available for this section\n```")
+            
+            return result
+        
+        # Apply our processing function to the raw response
+        processed_response = process_ai_response(response)
+        
         # Create AIAssistance record
         AIAssistance.objects.create(
             user=request.user,
             code=code_snippet,
             prompt=prompt,
-            response=response
+            response=processed_response
         )
         
         return JsonResponse({
-            'response': response
+            'response': processed_response
         })
     
     return JsonResponse({'error': 'Only POST method is allowed'}, status=405)

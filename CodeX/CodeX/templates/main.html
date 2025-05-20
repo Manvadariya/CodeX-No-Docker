@@ -52,11 +52,23 @@
                             <span class="fw-bold text-white" id="filename">Main.cpp</span>
                         </div>
                         <div class="d-flex align-items-center" style="gap: 10px;">
-                            <select class="custom-dropdown" id="language-selector" style="width: 120px; height: 30px;">
+                            <select class="custom-dropdown" id="language-selector" style="width: 150px; height: 30px;">
                                 <option value="cpp">C++</option>
+                                <option value="c">C</option>
                                 <option value="python">Python</option>
                                 <option value="javascript">JavaScript</option>
                                 <option value="java">Java</option>
+                                <option value="php">PHP</option>
+                                <option value="ruby">Ruby</option>
+                                <option value="perl">Perl</option>
+                                <option value="csharp">C#</option>
+                                <option value="ocaml">OCaml</option>
+                                <option value="vbnet">VB.NET</option>
+                                <option value="swift">Swift</option>
+                                <option value="fortran">Fortran</option>
+                                <option value="haskell">Haskell</option>
+                                <option value="assembly">Assembly</option>
+                                <option value="prolog">Prolog</option>
                             </select>
 
                             <select class="theme-dropdown theme-selector" id="theme-selector" style="width: 120px; height: 30px;">
@@ -281,6 +293,25 @@
 {% block common_scripts %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/ace.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/ext-language_tools.js"></script>
+    
+    <!-- Load language modes for all supported languages -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-c_cpp.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-python.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-javascript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-java.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-php.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-ruby.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-perl.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-csharp.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-ocaml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-vbscript.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-swift.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-pascal.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-fortran.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-haskell.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-assembly_x86.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.23.0/mode-prolog.js"></script>
+    
     <script>
         // Pass Django template variables to JavaScript
         window.CHAT_API_URL = "{% url 'chat_api' %}";
